@@ -2,7 +2,7 @@
   "name": "Plan 3D — Gabo",
   "short_name": "Plan 3D",
   "description": "Seguimiento de cursos, proyectos y timeline hacia Barcelona",
-  "start_url": "/plan/",
+  "start_url": "/PLAN/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0a0a0a",
