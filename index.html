@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Plan 3D">
+<title>Plan 3D — Gabo</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f3;
+    --bg3: #ebebea;
+    --text: #0a0a0a;
+    --text2: #6b6b6b;
+    --text3: #9a9a9a;
+    --border: rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.18);
+    --blue: #378ADD;
+    --blue-bg: #E6F1FB;
+    --blue-text: #0C447C;
+    --purple: #7F77DD;
+    --purple-bg: #EEEDFE;
+    --purple-text: #3C3489;
+    --teal: #1D9E75;
+    --teal-bg: #E1F5EE;
+    --teal-text: #085041;
+    --amber: #BA7517;
+    --amber-bg: #FAEEDA;
+    --amber-text: #633806;
+    --green: #639922;
+    --green-bg: #EAF3DE;
+    --green-text: #27500A;
+    --red: #E24B4A;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111110;
+      --bg2: #1a1a19;
+      --bg3: #242422;
+      --text: #f0efeb;
+      --text2: #999892;
+      --text3: #666560;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.18);
+      --blue-bg: #042C53;
+      --blue-text: #B5D4F4;
+      --purple-bg: #26215C;
+      --purple-text: #CECBF6;
+      --teal-bg: #04342C;
+      --teal-text: #9FE1CB;
+      --amber-bg: #412402;
+      --amber-text: #FAC775;
+      --green-bg: #173404;
+      --green-text: #C0DD97;
+    }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 0 calc(80px + var(--safe-bottom)) 0;
+    min-height: 100dvh;
+  }
+
+  .topbar {
+    padding: 56px 20px 16px;
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 0.5px solid var(--border);
+  }
+
+  .topbar h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+  .topbar p { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+  .content { padding: 20px 20px 0; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .cards-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .metric {
+    background: var(--bg2);
+    border-radius: var(--radius-md);
+    padding: 14px;
+  }
+
+  .metric-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .metric-value { font-size: 26px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+
+  .card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 8px;
+  }
+
+  .card-title { font-size: 14px; font-weight: 600; line-height: 1.3; }
+  .card-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  .badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .badge-blue { background: var(--blue-bg); color: var(--blue-text); }
+  .badge-purple { background: var(--purple-bg); color: var(--purple-text); }
+  .badge-teal { background: var(--teal-bg); color: var(--teal-text); }
+  .badge-gray { background: var(--bg3); color: var(--text2); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber-text); }
+  .badge-green { background: var(--green-bg); color: var(--green-text); }
+
+  .progress-track {
+    height: 5px;
+    background: var(--bg3);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s ease;
+  }
+
+  .fill-blue { background: var(--blue); }
+  .fill-purple { background: var(--purple); }
+  .fill-teal { background: var(--teal); }
+
+  .card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .card-meta span::before { content: '·'; margin-right: 8px; }
+  .card-meta span:first-child::before { content: ''; margin-right: 0; }
+
+  .card-eta {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text2);
+    padding-top: 10px;
+    border-top: 0.5px solid var(--border);
+  }
+
+  .card-eta strong { color: var(--text); }
+
+  .today-task {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 0.5px solid var(--border);
+    cursor: pointer;
+  }
+
+  .today-task:last-child { border-bottom: none; }
+
+  .check-box {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border2);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+    transition: all 0.15s;
+  }
+
+  .check-box.done {
+    background: var(--teal);
+    border-color: var(--teal);
+  }
+
+  .check-box.done::after {
+    content: '';
+    width: 5px;
+    height: 9px;
+    border: 2px solid white;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg) translateY(-1px);
+    display: block;
+  }
+
+  .task-text { flex: 1; }
+  .task-title { font-size: 14px; font-weight: 500; }
+  .task-title.done-text { text-decoration: line-through; color: var(--text3); }
+  .task-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .task-time { font-size: 12px; color: var(--text3); white-space: nowrap; margin-top: 2px; }
+
+  .pomo-section { margin-top: 24px; }
+
+  .pomo-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 12px 0;
+  }
+
+  .pomo-dot {
+    width: 32px;
+    height: 10px;
+    border-radius: 5px;
+    background: var(--bg3);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .pomo-dot.done { background: var(--red); }
+  .pomo-dot.active { background: var(--amber); }
+
+  .pomo-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .btn {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 18px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border2);
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    transition: opacity 0.15s;
+    -webkit-appearance: none;
+  }
+
+  .btn:active { opacity: 0.7; transform: scale(0.98); }
+
+  .btn-primary {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+
+  .btn-sm { font-size: 12px; padding: 6px 12px; }
+
+  .tl-item {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 4px;
+  }
+
+  .tl-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 16px;
+    flex-shrink: 0;
+  }
+
+  .tl-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+
+  .tl-dot-active { background: var(--blue); }
+  .tl-dot-next { background: var(--bg3); border: 1.5px solid var(--border2); }
+  .tl-dot-done { background: var(--teal); }
+
+  .tl-line {
+    width: 1px;
+    flex: 1;
+    background: var(--border);
+    min-height: 24px;
+    margin: 4px 0;
+  }
+
+  .tl-content { flex: 1; padding-bottom: 20px; }
+  .tl-title { font-size: 14px; font-weight: 500; }
+  .tl-date { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  .interrupt-form {
+    background: var(--bg2);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .form-group { margin-bottom: 12px; }
+  .form-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; display: block; font-weight: 500; }
+
+  .form-control {
+    width: 100%;
+    font-size: 14px;
+    padding: 10px 12px;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--text);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .form-control:focus { outline: none; border-color: var(--blue); }
+
+  .int-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 0.5px solid var(--border);
+    font-size: 13px;
+  }
+
+  .int-item:last-child { border-bottom: none; }
+  .int-info { flex: 1; }
+  .int-label { font-weight: 500; }
+  .int-detail { font-size: 12px; color: var(--text2); margin-top: 1px; }
+
+  .int-remove {
+    background: none;
+    border: none;
+    color: var(--text3);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+  }
+
+  .alert {
+    border-radius: var(--radius-md);
+    padding: 14px;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-top: 12px;
+  }
+
+  .alert-amber { background: var(--amber-bg); color: var(--amber-text); }
+  .alert-green { background: var(--green-bg); color: var(--green-text); }
+  .alert-blue { background: var(--blue-bg); color: var(--blue-text); }
+
+  .alert strong { font-weight: 600; }
+
+  .finde-box {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 0.5px solid var(--border);
+  }
+
+  .divider {
+    height: 0.5px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg);
+    border-top: 0.5px solid var(--border);
+    display: flex;
+    padding-bottom: var(--safe-bottom);
+    z-index: 20;
+  }
+
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 4px;
+    gap: 4px;
+    border: none;
+    background: transparent;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 500;
+    transition: color 0.15s;
+  }
+
+  .nav-item.active { color: var(--text); }
+
+  .nav-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav-icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+  .curso-progress-counter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+  }
+
+  .counter-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border2);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .counter-btn:active { opacity: 0.6; }
+  .counter-value { font-size: 14px; font-weight: 600; color: var(--text); }
+  .counter-label { font-size: 12px; color: var(--text2); }
+
+  .empty-state {
+    text-align: center;
+    padding: 32px 20px;
+    color: var(--text3);
+    font-size: 13px;
+  }
+
+  .inline-edit {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 10px;
+  }
+
+  .tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--bg3);
+    color: var(--text2);
+  }
+
+  .project-actions { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <h1>Plan 3D</h1>
+    <p id="fecha-display">Cargando...</p>
+  </div>
+
+  <div class="content">
+
+    <!-- HOY -->
+    <div id="tab-hoy" class="section active">
+      <div class="cards-row">
+        <div class="metric">
+          <div class="metric-label">Horas disponibles</div>
+          <div class="metric-value" id="horas-hoy">6h</div>
+          <div class="metric-sub" id="tipo-dia">Lun–Jue · mañana</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Pomodoros</div>
+          <div class="metric-value" id="pomo-display">0</div>
+          <div class="metric-sub" id="pomo-tiempo">0 min de foco</div>
+        </div>
+      </div>
+
+      <div class="section-label">Tareas de hoy</div>
+      <div id="tasks-list"></div>
+
+      <div class="pomo-section">
+        <div class="section-label">Sesión de pomodoros</div>
+        <div class="pomo-grid" id="pomo-grid"></div>
+        <div class="pomo-actions">
+          <button class="btn btn-primary" onclick="addPomo()">+ Pomodoro completado</button>
+          <button class="btn" onclick="resetPomos()">Reiniciar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CURSOS -->
+    <div id="tab-cursos" class="section">
+      <div class="section-label">Progreso de formación</div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">TOAnimate</div>
+            <div class="card-sub">Animación de personaje con Blender</div>
+          </div>
+          <span class="badge badge-blue">Activo</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill fill-blue" id="toa-bar" style="width:70%"></div>
+        </div>
+        <div class="card-meta">
+          <span id="toa-completadas">57 completadas</span>
+          <span id="toa-pendientes">24 pendientes</span>
+          <span>~8h de vídeo</span>
+        </div>
+        <div class="curso-progress-counter" style="margin-top:14px">
+          <button class="counter-btn" onclick="updateCurso('toa',-1)">−</button>
+          <div style="text-align:center">
+            <div class="counter-value" id="toa-num">57</div>
+            <div class="counter-label">lecciones vistas</div>
+          </div>
+          <button class="counter-btn" onclick="updateCurso('toa',1)">+</button>
+        </div>
+        <div class="card-eta">Estimación fin: <strong>finales de junio 2026</strong></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">CGBoost — Cinematic Storytelling</div>
+            <div class="card-sub">Narración y dirección en Blender</div>
+          </div>
+          <span class="badge badge-gray">A continuación</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill fill-purple" id="cg1-bar" style="width:0%"></div>
+        </div>
+        <div class="card-meta">
+          <span id="cg1-completadas">0 completadas</span>
+          <span>~117 lecciones</span>
+          <span>~9.5h de vídeo</span>
+        </div>
+        <div class="curso-progress-counter" style="margin-top:14px">
+          <button class="counter-btn" onclick="updateCurso('cg1',-1)">−</button>
+          <div style="text-align:center">
+            <div class="counter-value" id="cg1-num">0</div>
+            <div class="counter-label">lecciones vistas</div>
+          </div>
+          <button class="counter-btn" onclick="updateCurso('cg1',1)">+</button>
+        </div>
+        <div class="card-eta">Estimación inicio: <strong>julio 2026</strong></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">CGBoost — Master Compositing</div>
+            <div class="card-sub">VFX, color grading y efectos</div>
+          </div>
+          <span class="badge badge-gray">A continuación</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill fill-teal" id="cg2-bar" style="width:0%"></div>
+        </div>
+        <div class="card-meta">
+          <span id="cg2-completadas">0 completadas</span>
+          <span>~118 lecciones</span>
+          <span>~9.5h de vídeo</span>
+        </div>
+        <div class="curso-progress-counter" style="margin-top:14px">
+          <button class="counter-btn" onclick="updateCurso('cg2',-1)">−</button>
+          <div style="text-align:center">
+            <div class="counter-value" id="cg2-num">0</div>
+            <div class="counter-label">lecciones vistas</div>
+          </div>
+          <button class="counter-btn" onclick="updateCurso('cg2',1)">+</button>
+        </div>
+        <div class="card-eta">Estimación inicio: <strong>agosto 2026</strong></div>
+      </div>
+    </div>
+
+    <!-- PROYECTOS -->
+    <div id="tab-proyectos" class="section">
+      <div class="section-label">Portfolio propio</div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Proyecto #1 — Brief por definir</div>
+            <div class="card-sub">Cliente falso · pieza original</div>
+          </div>
+          <span class="badge badge-gray">Sin empezar</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill fill-blue" style="width:0%"></div>
+        </div>
+        <div class="card-meta">
+          <span>Disponible tras CGBoost</span>
+          <span>~3 semanas estimadas</span>
+        </div>
+        <div class="project-actions">
+          <span class="tag">Concepto</span>
+          <span class="tag">Modelado</span>
+          <span class="tag">Animación</span>
+          <span class="tag">Render</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Proyecto #2 — Brief por definir</div>
+            <div class="card-sub">Cliente falso · pieza original</div>
+          </div>
+          <span class="badge badge-gray">Sin empezar</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill fill-purple" style="width:0%"></div>
+        </div>
+        <div class="card-meta">
+          <span>Tras proyecto #1</span>
+          <span>~3 semanas estimadas</span>
+        </div>
+        <div class="project-actions">
+          <span class="tag">Concepto</span>
+          <span class="tag">ComfyUI</span>
+          <span class="tag">Blender</span>
+          <span class="tag">Reel</span>
+        </div>
+      </div>
+
+      <div class="card" style="border-color: rgba(127,119,221,0.3);">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Mageia — pieza de reel</div>
+            <div class="card-sub">Proyecto personal · director creativo</div>
+          </div>
+          <span class="badge badge-purple">Personal</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill fill-purple" style="width:0%"></div>
+        </div>
+        <div class="card-meta">
+          <span>Tras conseguir nuevo trabajo</span>
+          <span>Concept art · ComfyUI · Blender</span>
+        </div>
+        <div class="card-eta" style="margin-top:10px;font-size:12px;color:var(--text2)">Fantasía oscura · folclore del norte de España · animación estilizada</div>
+      </div>
+    </div>
+
+    <!-- TIMELINE -->
+    <div id="tab-timeline" class="section">
+      <div class="cards-row">
+        <div class="metric">
+          <div class="metric-label">Semanas al reel</div>
+          <div class="metric-value" id="semanas-reel">~14</div>
+          <div class="metric-sub">estimación actual</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Objetivo salida</div>
+          <div class="metric-value" style="font-size:18px;padding-top:4px">Dic 26</div>
+          <div class="metric-sub">Barcelona</div>
+        </div>
+      </div>
+
+      <div class="section-label">Hitos del plan</div>
+
+      <div class="tl-item">
+        <div class="tl-left"><div class="tl-dot tl-dot-active"></div><div class="tl-line"></div></div>
+        <div class="tl-content">
+          <div class="tl-title">Terminar TOAnimate</div>
+          <div class="tl-date">Ahora → finales de junio 2026</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-left"><div class="tl-dot tl-dot-next"></div><div class="tl-line"></div></div>
+        <div class="tl-content">
+          <div class="tl-title">CGBoost — Cinematic Storytelling</div>
+          <div class="tl-date">Julio 2026 · ~4 semanas</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-left"><div class="tl-dot tl-dot-next"></div><div class="tl-line"></div></div>
+        <div class="tl-content">
+          <div class="tl-title">CGBoost — Master Compositing</div>
+          <div class="tl-date">Agosto 2026 · ~4 semanas</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-left"><div class="tl-dot tl-dot-next"></div><div class="tl-line"></div></div>
+        <div class="tl-content">
+          <div class="tl-title">Proyectos propios + reel actualizado</div>
+          <div class="tl-date">Sep – Oct 2026 · ~6 semanas</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-left"><div class="tl-dot tl-dot-next"></div><div class="tl-line"></div></div>
+        <div class="tl-content">
+          <div class="tl-title">Búsqueda activa de trabajo 3D / motion</div>
+          <div class="tl-date">Oct – Nov 2026</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-left"><div class="tl-dot tl-dot-next"></div></div>
+        <div class="tl-content">
+          <div class="tl-title">Salida de FUDEN + mudanza Barcelona</div>
+          <div class="tl-date">Diciembre 2026 · objetivo</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECALCULAR -->
+    <div id="tab-plan" class="section">
+      <div class="section-label">Registrar interrupción</div>
+      <div class="interrupt-form">
+        <div class="form-group">
+          <label class="form-label">Fecha</label>
+          <input class="form-control" type="date" id="int-fecha">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo</label>
+          <select class="form-control" id="int-tipo">
+            <option value="grabacion">Grabación</option>
+            <option value="reunion">Reunión imprevista</option>
+            <option value="enfermedad">Enfermedad / baja</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Horas de estudio perdidas</label>
+          <select class="form-control" id="int-horas">
+            <option value="1">1 hora</option>
+            <option value="1.5">1.5 horas</option>
+            <option value="2" selected>2 horas</option>
+            <option value="2.5">2.5 horas</option>
+            <option value="3">3 horas (mañana entera)</option>
+            <option value="4">4+ horas (día perdido)</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="addInterrupt()">Añadir y recalcular plan</button>
+      </div>
+
+      <div id="interrupts-list"></div>
+      <div id="recalc-result"></div>
+
+      <div class="finde-box">
+        <div class="section-label">¿Necesito el fin de semana?</div>
+        <div id="finde-box-content" class="alert alert-blue">
+          Añade las interrupciones de la semana y te digo si necesitas conectarte el sábado o domingo para mantener el ritmo.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="switchTab('hoy')" id="nav-hoy">
+    <div class="nav-icon">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </div>
+    Hoy
+  </button>
+  <button class="nav-item" onclick="switchTab('cursos')" id="nav-cursos">
+    <div class="nav-icon">
+      <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+    </div>
+    Cursos
+  </button>
+  <button class="nav-item" onclick="switchTab('proyectos')" id="nav-proyectos">
+    <div class="nav-icon">
+      <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    </div>
+    Proyectos
+  </button>
+  <button class="nav-item" onclick="switchTab('timeline')" id="nav-timeline">
+    <div class="nav-icon">
+      <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </div>
+    Timeline
+  </button>
+  <button class="nav-item" onclick="switchTab('plan')" id="nav-plan">
+    <div class="nav-icon">
+      <svg viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="18" y2="18"/></svg>
+    </div>
+    Recalcular
+  </button>
+</nav>
+
+<script>
+const STORAGE_KEY = 'plan3d_v2';
+const HORAS_BASE = 2.5;
+const HORAS_SEMANA = HORAS_BASE * 5;
+
+const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+let state = {
+  pomos: 0,
+  lastPomoDate: '',
+  cursos: { toa: 57, cg1: 0, cg2: 0 },
+  tasks: [
+    { id: 1, title: 'TOAnimate — Analyzing a Dialogue Piece', sub: 'Próxima lección sugerida · 26:43', time: '~30 min', done: false },
+    { id: 2, title: 'TOAnimate — segunda lección del día', sub: 'Avanzar en el bloque de diálogo', time: '~30 min', done: false },
+    { id: 3, title: 'Práctica — reproducir ejercicio en Blender', sub: 'Aplicar lo visto hoy', time: '~60 min', done: false },
+  ],
+  interrupts: [],
+};
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) state = { ...state, ...JSON.parse(saved) };
+  } catch(e) {}
+  const today = getDateStr();
+  if (state.lastPomoDate !== today) {
+    state.pomos = 0;
+    state.lastPomoDate = today;
+    saveState();
+  }
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function getDateStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function getDayInfo() {
+  const d = new Date();
+  const dow = d.getDay();
+  const month = d.getMonth();
+  if (dow === 0 || dow === 6) return { horas: 0, label: 'Fin de semana · descanso (o recuperación)' };
+  if (dow === 5) return { horas: month >= 5 ? 7 : 6, label: month >= 5 ? 'Viernes · 7:00–14:00' : 'Viernes · horario reducido' };
+  return { horas: 6, label: 'Lun–Jue · 8:00–14:00' };
+}
+
+function renderFechaHoy() {
+  const d = new Date();
+  document.getElementById('fecha-display').textContent =
+    `${DIAS[d.getDay()]}, ${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`;
+  const info = getDayInfo();
+  document.getElementById('horas-hoy').textContent = info.horas > 0 ? info.horas + 'h' : '—';
+  document.getElementById('tipo-dia').textContent = info.label;
+  const intFecha = document.getElementById('int-fecha');
+  if (intFecha) intFecha.value = getDateStr();
+}
+
+function renderTasks() {
+  const list = document.getElementById('tasks-list');
+  list.innerHTML = state.tasks.map(t => `
+    <div class="today-task" onclick="toggleTask(${t.id})">
+      <div class="check-box ${t.done ? 'done' : ''}" id="check-${t.id}"></div>
+      <div class="task-text">
+        <div class="task-title ${t.done ? 'done-text' : ''}">${t.title}</div>
+        <div class="task-sub">${t.sub}</div>
+      </div>
+      <div class="task-time">${t.time}</div>
+    </div>
+  `).join('');
+}
+
+function toggleTask(id) {
+  const t = state.tasks.find(t => t.id === id);
+  if (t) { t.done = !t.done; saveState(); renderTasks(); }
+}
+
+function renderPomos() {
+  const grid = document.getElementById('pomo-grid');
+  const total = 12;
+  grid.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    d.className = 'pomo-dot' + (i < state.pomos ? ' done' : i === state.pomos ? ' active' : '');
+    d.onclick = () => { state.pomos = i + 1; saveState(); renderPomos(); updatePomoStats(); };
+    grid.appendChild(d);
+  }
+  updatePomoStats();
+}
+
+function updatePomoStats() {
+  document.getElementById('pomo-display').textContent = state.pomos;
+  document.getElementById('pomo-tiempo').textContent = (state.pomos * 25) + ' min de foco';
+}
+
+function addPomo() {
+  if (state.pomos < 12) { state.pomos++; saveState(); renderPomos(); }
+}
+
+function resetPomos() {
+  state.pomos = 0; saveState(); renderPomos();
+}
+
+function updateCurso(curso, delta) {
+  const maxes = { toa: 81, cg1: 117, cg2: 118 };
+  state.cursos[curso] = Math.max(0, Math.min(maxes[curso], state.cursos[curso] + delta));
+  saveState();
+  renderCursos();
+}
+
+function renderCursos() {
+  const { toa, cg1, cg2 } = state.cursos;
+  document.getElementById('toa-num').textContent = toa;
+  document.getElementById('toa-completadas').textContent = toa + ' completadas';
+  document.getElementById('toa-pendientes').textContent = Math.max(0, 81 - toa) + ' pendientes';
+  document.getElementById('toa-bar').style.width = Math.round(toa / 81 * 100) + '%';
+
+  document.getElementById('cg1-num').textContent = cg1;
+  document.getElementById('cg1-completadas').textContent = cg1 + ' completadas';
+  document.getElementById('cg1-bar').style.width = Math.round(cg1 / 117 * 100) + '%';
+
+  document.getElementById('cg2-num').textContent = cg2;
+  document.getElementById('cg2-completadas').textContent = cg2 + ' completadas';
+  document.getElementById('cg2-bar').style.width = Math.round(cg2 / 118 * 100) + '%';
+}
+
+function addInterrupt() {
+  const fecha = document.getElementById('int-fecha').value;
+  const tipo = document.getElementById('int-tipo').value;
+  const horas = parseFloat(document.getElementById('int-horas').value);
+  if (!fecha) return;
+  const labels = { grabacion: 'Grabación', reunion: 'Reunión imprevista', enfermedad: 'Enfermedad', otro: 'Otro' };
+  state.interrupts.push({ fecha, tipo, horas, label: labels[tipo], id: Date.now() });
+  saveState();
+  renderInterrupts();
+  recalcular();
+}
+
+function removeInterrupt(id) {
+  state.interrupts = state.interrupts.filter(i => i.id !== id);
+  saveState();
+  renderInterrupts();
+  recalcular();
+}
+
+function renderInterrupts() {
+  const list = document.getElementById('interrupts-list');
+  if (!state.interrupts.length) { list.innerHTML = ''; return; }
+  list.innerHTML = '<div class="section-label" style="margin-top:16px">Esta semana</div>' +
+    state.interrupts.map(it => `
+      <div class="int-item">
+        <div class="int-info">
+          <div class="int-label">${it.label}</div>
+          <div class="int-detail">${it.fecha} · ${it.horas}h perdidas</div>
+        </div>
+        <button class="int-remove" onclick="removeInterrupt(${it.id})" aria-label="Eliminar">×</button>
+      </div>
+    `).join('');
+}
+
+function recalcular() {
+  const horasPerdidas = state.interrupts.reduce((s, i) => s + i.horas, 0);
+  const necesitaFinde = horasPerdidas >= HORAS_BASE * 1.5;
+  const horasFinde = Math.min(Math.ceil(horasPerdidas - HORAS_BASE), 4);
+
+  const result = document.getElementById('recalc-result');
+  const finde = document.getElementById('finde-box-content');
+
+  if (!state.interrupts.length) {
+    result.innerHTML = '';
+    finde.className = 'alert alert-blue';
+    finde.textContent = 'Añade las interrupciones de la semana y te digo si necesitas conectarte el sábado o domingo para mantener el ritmo.';
+    return;
+  }
+
+  result.innerHTML = `<div class="alert alert-amber" style="margin-bottom:12px">
+    <strong>Impacto acumulado:</strong> ${horasPerdidas.toFixed(1)}h perdidas esta semana.<br>
+    Equivale a ${Math.ceil(horasPerdidas / HORAS_BASE)} día${Math.ceil(horasPerdidas / HORAS_BASE) > 1 ? 's' : ''} de estudio.
+  </div>`;
+
+  if (necesitaFinde) {
+    finde.className = 'alert alert-amber';
+    finde.innerHTML = `<strong>Sí, te recomiendo ${horasFinde}h este sábado.</strong><br>Así recuperas el ritmo sin arrastrar el retraso a la semana siguiente.`;
+  } else {
+    finde.className = 'alert alert-green';
+    finde.innerHTML = '<strong>No hace falta.</strong> Vas dentro del margen — el retraso es asumible con el ritmo normal de la semana.';
+  }
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('nav-' + name).classList.add('active');
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+loadState();
+renderFechaHoy();
+renderTasks();
+renderPomos();
+renderCursos();
+renderInterrupts();
+recalcular();
+</script>
+</body>
+</html>
