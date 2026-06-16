@@ -378,6 +378,7 @@ let timerInterval = null;
 let timerRunning = false;
 let timerSeconds = POMO_WORK;
 let timerTotal = POMO_WORK;
+let timerEndTime = null; // timestamp when current phase ends
 
 function getDateStr() {
   return new Date().toISOString().split('T')[0];
@@ -463,17 +464,23 @@ function toggleTimer() {
 
 function startTimer() {
   timerRunning = true;
-  document.getElementById('timer-btn').textContent = 'Pausar';
+  document.getElementById("timer-btn").textContent = "Pausar";
+  timerEndTime = Date.now() + timerSeconds * 1000;
   timerInterval = setInterval(() => {
-    timerSeconds--;
-    updateTimerDisplay();
-    if (timerSeconds <= 0) {
+    const remaining = Math.round((timerEndTime - Date.now()) / 1000);
+    if (remaining <= 0) {
+      timerSeconds = 0;
+      updateTimerDisplay();
       clearInterval(timerInterval);
       timerInterval = null;
       timerRunning = false;
+      timerEndTime = null;
       onTimerComplete();
+    } else {
+      timerSeconds = remaining;
+      updateTimerDisplay();
     }
-  }, 1000);
+  }, 500);
 }
 
 function pauseTimer() {
