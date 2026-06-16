@@ -444,12 +444,37 @@ function renderNotifHint() {
   else { el.innerHTML = '<button class="btn btn-sm" onclick="requestNotifPermission()" style="margin-top:4px">Activar notificaciones</button>'; }
 }
 
-function sendNotification(title, body) {
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(title, { body, icon: 'icon-192.png', badge: 'icon-192.png' });
+function playSound(type) {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  if (type === "work") {
+    // 3 short beeps - work done
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.15);
+    setTimeout(() => { const o2 = ctx.createOscillator(); const g2 = ctx.createGain(); o2.connect(g2); g2.connect(ctx.destination); o2.frequency.value = 880; g2.gain.setValueAtTime(0.3, ctx.currentTime); g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15); o2.start(ctx.currentTime); o2.stop(ctx.currentTime + 0.15); }, 200);
+    setTimeout(() => { const o3 = ctx.createOscillator(); const g3 = ctx.createGain(); o3.connect(g3); g3.connect(ctx.destination); o3.frequency.value = 1100; g3.gain.setValueAtTime(0.3, ctx.currentTime); g3.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3); o3.start(ctx.currentTime); o3.stop(ctx.currentTime + 0.3); }, 400);
+  } else {
+    // soft low tone - rest done
+    osc.frequency.setValueAtTime(440, ctx.currentTime);
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.4);
   }
-  // Also vibrate on mobile
-  if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
+}
+
+function sendNotification(title, body, soundType) {
+  if ("Notification" in window && Notification.permission === "granted") {
+    new Notification(title, { body, icon: "icon-192.png", badge: "icon-192.png" });
+  }
+  if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
+  try { playSound(soundType || "work"); } catch(e) {}
 }
 
 // ─── TIMER ───────────────────────────────────────────
@@ -510,15 +535,15 @@ function onTimerComplete() {
     const isLongBreak = state.timerPomoCount % 4 === 0;
     if (isLongBreak) {
       state.timerPhase = 'rest-long';
-      sendNotification('🎉 ¡4 pomodoros completados!', 'Descansa 15 minutos — te lo has ganado.');
+      sendNotification('🎉 ¡4 pomodoros completados!', 'Descansa 15 minutos — te lo has ganado.', 'work');
     } else {
       state.timerPhase = 'rest';
-      sendNotification('✅ ¡Pomodoro completado!', 'Descansa 5 minutos y vuelve.');
+      sendNotification('✅ ¡Pomodoro completado!', 'Descansa 5 minutos y vuelve.', 'work');
     }
   } else {
     // Rest finished
     state.timerPhase = 'work';
-    sendNotification('⏰ Descanso terminado', '¡A por el siguiente pomodoro!');
+    sendNotification('⏰ Descanso terminado', '¡A por el siguiente pomodoro!', 'rest');
   }
 
   saveState();
