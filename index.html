@@ -225,7 +225,7 @@
           <div style="text-align:center"><div class="counter-value" id="toa-num">57</div><div class="counter-label">lecciones vistas</div></div>
           <button class="counter-btn" onclick="updateCurso('toa',1)">+</button>
         </div>
-        <div class="card-eta">Estimación fin: <strong>finales de junio 2026</strong></div>
+        <div class="card-eta">Estimación fin: <strong>finales de junio 2026</strong> · <button class="btn btn-sm" onclick="refreshAutoTasks()" style="margin-left:4px">↻ Actualizar tareas de hoy</button></div>
       </div>
       <div class="card">
         <div class="card-header">
@@ -359,18 +359,91 @@ const POMO_REST = 5 * 60;
 const POMO_LONG = 15 * 60;
 const CIRCUMFERENCE = 2 * Math.PI * 54; // 339.292
 
+// TOAnimate pending lessons in order
+const TOA_LECCIONES = [
+  { id: 76, title: 'Lip Sync — Exercise Part 1', dur: '40:08', enProgreso: true },
+  { id: 77, title: 'Lip Sync — Exercise Part 2', dur: '44:30' },
+  { id: 78, title: 'Facial Appeal and Expressions', dur: '25:24' },
+  { id: 79, title: 'Head Turn — Lecture', dur: '10:34' },
+  { id: 80, title: 'Advanced Approach to Reference Analysis', dur: '11:42' },
+  { id: 81, title: 'Head Turn — Exercise Part 1', dur: '28:21' },
+  { id: 82, title: 'Head Turn — Exercise Part 2', dur: '17:10' },
+  { id: 83, title: 'Head Turn — Exercise Part 3 (Splocking)', dur: '55:06' },
+  { id: 84, title: 'Animating Hands — Lecture', dur: '10:30' },
+  { id: 85, title: 'Animating Hands — Exercise Part 1', dur: '12:08' },
+  { id: 86, title: 'Animating Hands — Exercise Part 2', dur: '15:49' },
+  { id: 87, title: 'Animating Hands — Exercise Part 3', dur: '30:27' },
+  { id: 88, title: 'Building a Story', dur: '7:42' },
+  { id: 89, title: 'Sincere Acting', dur: '24:20' },
+  { id: 90, title: 'Social Status in Acting', dur: '7:48' },
+  { id: 91, title: 'Staging & Composition', dur: '22:15' },
+  { id: 92, title: 'Finding a Job in Animation', dur: '4:46' },
+  { id: 93, title: 'Industry Etiquette', dur: '11:36' },
+  { id: 94, title: 'The Power of Networking', dur: '7:02' },
+  { id: 95, title: 'Demo Reel Dos & Don'ts', dur: '9:12' },
+  { id: 97, title: 'Interview Time!', dur: '11:42' },
+  { id: 98, title: 'Negotiating Your Salary & Benefits', dur: '12:09' },
+];
+
+function durToMin(dur) {
+  const [m, s] = dur.split(':').map(Number);
+  return m + s / 60;
+}
+
+function getLeccionesHoy(leccionActualIdx) {
+  // Target ~90 min of video per day (with practice that fills ~2.5h)
+  const TARGET_MIN = 90;
+  let total = 0;
+  const hoy = [];
+  for (let i = leccionActualIdx; i < TOA_LECCIONES.length; i++) {
+    const l = TOA_LECCIONES[i];
+    const min = durToMin(l.dur);
+    if (total + min > TARGET_MIN && hoy.length > 0) break;
+    hoy.push(l);
+    total += min;
+    if (total >= TARGET_MIN) break;
+  }
+  return hoy;
+}
+
+function generateTOATasks() {
+  const idx = state.cursos.toa - 75; // 75 = lecciones completadas antes de las pendientes
+  const leccionIdx = Math.max(0, Math.min(idx, TOA_LECCIONES.length - 1));
+  const lecciones = getLeccionesHoy(leccionIdx);
+  const tasks = [];
+  lecciones.forEach((l, i) => {
+    const minVideo = Math.round(durToMin(l.dur));
+    tasks.push({
+      id: 10000 + l.id,
+      title: 'TOAnimate #' + l.id + ' — ' + l.title,
+      sub: 'Lección ' + l.id + ' · ' + l.dur,
+      time: '~' + minVideo + ' min',
+      done: false,
+      date: getDateStr(),
+      auto: true
+    });
+  });
+  // Add practice task
+  tasks.push({
+    id: 99999,
+    title: 'Práctica — reproducir en Blender',
+    sub: 'Aplicar lo visto en las lecciones de hoy',
+    time: '~60 min',
+    done: false,
+    date: getDateStr(),
+    auto: true
+  });
+  return tasks;
+}
+
 let state = {
   pomos: 0,
   lastPomoDate: '',
-  cursos: { toa: 57, cg1: 0, cg2: 0 },
-  tasks: [
-    { id: 1, title: 'TOAnimate — Analyzing a Dialogue Piece', sub: 'Próxima lección sugerida · 26:43', time: '~30 min', done: false, date: getDateStr() },
-    { id: 2, title: 'TOAnimate — segunda lección del día', sub: 'Avanzar en el bloque de diálogo', time: '~30 min', done: false, date: getDateStr() },
-    { id: 3, title: 'Práctica — reproducir ejercicio en Blender', sub: 'Aplicar lo visto hoy', time: '~60 min', done: false, date: getDateStr() },
-  ],
+  cursos: { toa: 75, cg1: 0, cg2: 0 },
+  tasks: [],
   interrupts: [],
-  timerPhase: 'work', // work | rest | rest-long
-  timerPomoCount: 0,  // pomos completados en ciclo actual (0-3)
+  timerPhase: 'work',
+  timerPomoCount: 0,
 };
 
 // Timer runtime (not persisted)
@@ -395,22 +468,35 @@ function loadState() {
 
   const today = getDateStr();
 
-  // Carry over unfinished tasks from previous days
-  if (state.lastPomoDate && state.lastPomoDate !== today) {
-    state.tasks = state.tasks.map(t => {
-      if (!t.done && t.date && t.date < today) {
-        return { ...t, date: today, sub: (t.sub.includes('⚠️') ? t.sub : '⚠️ Pendiente de ayer · ' + t.sub) };
-      }
-      return t;
-    });
+  // Carry over unfinished tasks from previous days + inject new auto tasks
+  if (state.lastPomoDate !== today) {
+    // Mark old auto tasks: if done remove, if not done carry over with warning
+    state.tasks = state.tasks
+      .filter(t => !(t.auto && t.done)) // remove completed auto tasks
+      .map(t => {
+        if (!t.done && t.date && t.date < today) {
+          return { ...t, date: today, sub: (t.sub.includes('⚠️') ? t.sub : '⚠️ Pendiente · ' + t.sub), auto: false };
+        }
+        return t;
+      });
+    // Remove old auto tasks that weren't started (no point carrying forward lesson tasks)
+    state.tasks = state.tasks.filter(t => !(t.auto && t.date < today));
+    // Add today's auto tasks
+    const autoTasks = generateTOATasks();
+    // Don't add if already have tasks for today's lessons
+    const hasAutoToday = state.tasks.some(t => t.auto && t.date === today);
+    if (!hasAutoToday) state.tasks = [...state.tasks, ...autoTasks];
     state.pomos = 0;
     state.lastPomoDate = today;
     state.timerPhase = 'work';
     state.timerPomoCount = 0;
     saveState();
-  } else if (!state.lastPomoDate) {
-    state.lastPomoDate = today;
-    saveState();
+  } else {
+    // Same day - if no tasks yet generate them
+    if (!state.tasks.some(t => t.date === today)) {
+      state.tasks = [...state.tasks, ...generateTOATasks()];
+      saveState();
+    }
   }
 
   // Set timer state from saved phase
@@ -652,8 +738,18 @@ function updatePomoStats() {
 }
 
 // ─── CURSOS ──────────────────────────────────────────
+function refreshAutoTasks() {
+  // Remove existing auto tasks for today and regenerate
+  state.tasks = state.tasks.filter(t => !t.auto);
+  const newTasks = generateTOATasks();
+  state.tasks = [...state.tasks, ...newTasks];
+  saveState();
+  renderTasks();
+  switchTab('hoy');
+}
+
 function updateCurso(curso, delta) {
-  const maxes = { toa: 81, cg1: 117, cg2: 118 };
+  const maxes = { toa: 97, cg1: 117, cg2: 118 };
   state.cursos[curso] = Math.max(0, Math.min(maxes[curso], state.cursos[curso] + delta));
   saveState(); renderCursos();
 }
@@ -662,8 +758,8 @@ function renderCursos() {
   const { toa, cg1, cg2 } = state.cursos;
   document.getElementById('toa-num').textContent = toa;
   document.getElementById('toa-completadas').textContent = toa + ' completadas';
-  document.getElementById('toa-pendientes').textContent = Math.max(0, 81 - toa) + ' pendientes';
-  document.getElementById('toa-bar').style.width = Math.round(toa / 81 * 100) + '%';
+  document.getElementById('toa-pendientes').textContent = Math.max(0, 97 - toa) + ' pendientes';
+  document.getElementById('toa-bar').style.width = Math.round(toa / 97 * 100) + '%';
   document.getElementById('cg1-num').textContent = cg1;
   document.getElementById('cg1-completadas').textContent = cg1 + ' completadas';
   document.getElementById('cg1-bar').style.width = Math.round(cg1 / 117 * 100) + '%';
