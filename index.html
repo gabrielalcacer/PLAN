@@ -347,7 +347,7 @@
 </nav>
 
 <script>
-const STORAGE_KEY = 'plan3d_v3';
+const STORAGE_KEY = 'plan3d_v4';
 const HORAS_BASE = 2.5;
 const HORAS_SEMANA = HORAS_BASE * 5;
 const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -358,6 +358,10 @@ const POMO_WORK = 25 * 60;
 const POMO_REST = 5 * 60;
 const POMO_LONG = 15 * 60;
 const CIRCUMFERENCE = 2 * Math.PI * 54; // 339.292
+
+function getDateStr() {
+  return new Date().toISOString().split('T')[0];
+}
 
 // TOAnimate pending lessons in order
 const TOA_LECCIONES = [
@@ -453,9 +457,6 @@ let timerSeconds = POMO_WORK;
 let timerTotal = POMO_WORK;
 let timerEndTime = null; // timestamp when current phase ends
 
-function getDateStr() {
-  return new Date().toISOString().split('T')[0];
-}
 
 function loadState() {
   try {
